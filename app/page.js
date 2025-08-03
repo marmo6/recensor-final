@@ -2,145 +2,294 @@
 
 import { useState } from 'react'
 
-export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [results, setResults] = useState([])
-  const [showResults, setShowResults] = useState(false)
+export default function AuthPage() {
+  const [isLogin, setIsLogin] = useState(true)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
 
-  const handleSearch = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!searchQuery.trim()) return
+    setLoading(true)
+    setMessage('')
 
-    const mockResults = [
-      {
-        id: 1,
-        title: `${searchQuery} - Premium Quality`,
-        price: '$29.99',
-        trustScore: 85,
-        rating: 4.3,
-        reviews: 1247
-      },
-      {
-        id: 2,
-        title: `Best ${searchQuery} Budget Option`,
-        price: '$19.99',
-        trustScore: 72,
-        rating: 3.8,
-        reviews: 892
+    // Simple validation
+    if (!email || !password) {
+      setMessage('Please fill all fields')
+      setLoading(false)
+      return
+    }
+
+    if (password.length < 6) {
+      setMessage('Password must be at least 6 characters')
+      setLoading(false)
+      return
+    }
+
+    // Simulate API call delay
+    setTimeout(() => {
+      if (isLogin) {
+        // Login logic
+        const existingUser = localStorage.getItem(`user_${email}`)
+        if (existingUser) {
+          const userData = JSON.parse(existingUser)
+          if (userData.password === password) {
+            // Successful login
+            localStorage.setItem('current_user', JSON.stringify({
+              email: email,
+              plan: userData.plan || 'free',
+              searches_today: userData.searches_today || 0,
+              last_search_date: userData.last_search_date || new Date().toDateString()
+            }))
+            setMessage('Login successful! Redirecting...')
+            setTimeout(() => {
+              window.location.href = '/'
+            }, 1000)
+          } else {
+            setMessage('Invalid email or password')
+          }
+        } else {
+          setMessage('Account not found. Please sign up first.')
+        }
+      } else {
+        // Sign up logic
+        const existingUser = localStorage.getItem(`user_${email}`)
+        if (existingUser) {
+          setMessage('Account already exists. Please login instead.')
+        } else {
+          // Create new user
+          const userData = {
+            email: email,
+            password: password,
+            plan: 'free',
+            searches_today: 0,
+            last_search_date: new Date().toDateString(),
+            created_at: new Date().toISOString()
+          }
+          
+          localStorage.setItem(`user_${email}`, JSON.stringify(userData))
+          localStorage.setItem('current_user', JSON.stringify({
+            email: email,
+            plan: 'free',
+            searches_today: 0,
+            last_search_date: new Date().toDateString()
+          }))
+          
+          setMessage('Account created successfully! Redirecting...')
+          setTimeout(() => {
+            window.location.href = '/'
+          }, 1000)
+        }
       }
-    ]
-    
-    setResults(mockResults)
-    setShowResults(true)
+      setLoading(false)
+    }, 1000)
   }
 
   return (
-    <div style={{ backgroundColor: '#f0f9ff', minHeight: '100vh' }}>
-      {/* Header */}
-      <header style={{ backgroundColor: 'white', padding: '1rem', borderBottom: '1px solid #ccc' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ color: '#2563eb', fontSize: '2rem', margin: 0 }}>Recensor</h1>
-          <button style={{ backgroundColor: '#2563eb', color: 'white', padding: '0.5rem 1rem', border: 'none', borderRadius: '4px' }}>
-            Get Started
+    <div style={{ 
+      backgroundColor: '#f0f9ff', 
+      minHeight: '100vh', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      padding: '1rem'
+    }}>
+      <div style={{ 
+        backgroundColor: 'white', 
+        padding: '2rem', 
+        borderRadius: '12px', 
+        boxShadow: '0 10px 25px rgba(0,0,0,0.1)', 
+        width: '100%', 
+        maxWidth: '400px' 
+      }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h1 style={{ 
+            color: '#2563eb', 
+            fontSize: '2.5rem', 
+            margin: '0 0 0.5rem 0',
+            fontWeight: 'bold'
+          }}>
+            Recensor
+          </h1>
+          <p style={{ color: '#6b7280', margin: 0 }}>
+            {isLogin ? 'Welcome back!' : 'Create your account'}
+          </p>
+        </div>
+        
+        {/* Toggle Buttons */}
+        <div style={{ 
+          display: 'flex', 
+          marginBottom: '1.5rem', 
+          backgroundColor: '#f3f4f6', 
+          borderRadius: '8px', 
+          padding: '4px' 
+        }}>
+          <button
+            onClick={() => {setIsLogin(true); setMessage('')}}
+            style={{
+              flex: 1,
+              padding: '0.75rem',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: isLogin ? '#2563eb' : 'transparent',
+              color: isLogin ? 'white' : '#6b7280',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            Login
+          </button>
+          <button
+            onClick={() => {setIsLogin(false); setMessage('')}}
+            style={{
+              flex: 1,
+              padding: '0.75rem',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: !isLogin ? '#2563eb' : 'transparent',
+              color: !isLogin ? 'white' : '#6b7280',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            Sign Up
           </button>
         </div>
-      </header>
 
-      {/* Main */}
-      <main style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 1rem', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-          Stop Buying Based on <span style={{ color: '#ef4444' }}>Fake Reviews</span>
-        </h2>
-        
-        <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '2rem' }}>
-          Get AI-powered trust scores for any product
-        </p>
-
-        {/* Search */}
-        <form onSubmit={handleSearch} style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', maxWidth: '500px', margin: '0 auto', gap: '0.5rem' }}>
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem', 
+              color: '#374151',
+              fontWeight: '500'
+            }}>
+              Email
+            </label>
             <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search any product..."
-              style={{ 
-                flex: 1, 
-                padding: '0.75rem', 
-                border: '1px solid #ccc', 
-                borderRadius: '4px',
-                fontSize: '1rem'
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                outline: 'none'
               }}
             />
-            <button 
-              type="submit"
-              style={{ 
-                backgroundColor: '#2563eb', 
-                color: 'white', 
-                padding: '0.75rem 1.5rem', 
-                border: 'none', 
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Search
-            </button>
           </div>
+          
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem', 
+              color: '#374151',
+              fontWeight: '500'
+            }}>
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength="6"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                outline: 'none'
+              }}
+            />
+            {!isLogin && (
+              <p style={{ 
+                fontSize: '0.8rem', 
+                color: '#6b7280', 
+                margin: '0.25rem 0 0 0' 
+              }}>
+                Minimum 6 characters
+              </p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '0.875rem',
+              backgroundColor: loading ? '#9ca3af' : '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
+          </button>
         </form>
 
-        {/* Quick searches */}
-        <div style={{ marginBottom: '2rem' }}>
-          {['iPhone 15', 'Nike Air Max', 'MacBook Pro'].map(term => (
-            <button
-              key={term}
-              onClick={() => {
-                setSearchQuery(term)
-                const mockResults = [{
-                  id: 1,
-                  title: `${term} - Premium Quality`,
-                  price: '$29.99',
-                  trustScore: 85,
-                  rating: 4.3,
-                  reviews: 1247
-                }]
-                setResults(mockResults)
-                setShowResults(true)
-              }}
-              style={{
-                margin: '0.25rem',
-                padding: '0.5rem 1rem',
-                backgroundColor: 'white',
-                border: '1px solid #ccc',
-                borderRadius: '20px',
-                cursor: 'pointer'
-              }}
-            >
-              {term}
-            </button>
-          ))}
-        </div>
-
-        {/* Results */}
-        {showResults && (
-          <div>
-            <h3>Results for "{searchQuery}"</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', textAlign: 'left' }}>
-              {results.map(product => (
-                <div key={product.id} style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '8px', border: '1px solid #ddd' }}>
-                  <div style={{ backgroundColor: '#dcfce7', color: '#166534', padding: '0.25rem 0.5rem', borderRadius: '12px', fontSize: '0.8rem', display: 'inline-block', marginBottom: '0.5rem' }}>
-                    Trust Score: {product.trustScore}/100
-                  </div>
-                  <h4>{product.title}</h4>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#2563eb' }}>{product.price}</span>
-                    <span>⭐ {product.rating} ({product.reviews} reviews)</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Message */}
+        {message && (
+          <div style={{
+            marginTop: '1rem',
+            padding: '0.75rem',
+            borderRadius: '8px',
+            backgroundColor: message.includes('successful') || message.includes('Redirecting') ? '#dcfce7' : '#fee2e2',
+            color: message.includes('successful') || message.includes('Redirecting') ? '#166534' : '#dc2626',
+            textAlign: 'center',
+            fontSize: '0.9rem'
+          }}>
+            {message}
           </div>
         )}
-      </main>
+
+        {/* Back Link */}
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <a 
+            href="/" 
+            style={{ 
+              color: '#6b7280', 
+              textDecoration: 'none',
+              fontSize: '0.9rem'
+            }}
+          >
+            ← Back to Home
+          </a>
+        </div>
+
+        {/* Free Tier Info */}
+        {!isLogin && (
+          <div style={{
+            marginTop: '1rem',
+            padding: '0.75rem',
+            backgroundColor: '#eff6ff',
+            borderRadius: '8px',
+            border: '1px solid #bfdbfe'
+          }}>
+            <p style={{ 
+              margin: 0, 
+              fontSize: '0.8rem', 
+              color: '#1e40af',
+              textAlign: 'center'
+            }}>
+              🎉 Start with 5 free searches per day!
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
